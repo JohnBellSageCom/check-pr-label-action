@@ -24,7 +24,7 @@ Instead, consider the same example, the action is triggered by `pull_request`'s 
 
 In your workflow YAML file add this step:
 ```yaml
-uses: NathanielHill/check-pr-label-action@v3.0.0
+uses: NathanielHill/check-pr-label-action@v4.0.0
 with:
     github-token: '${{ secrets.GITHUB_TOKEN }}'
     valid-labels: 'bug, enhancement'
