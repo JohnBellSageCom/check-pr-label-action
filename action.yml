@@ -1,6 +1,6 @@
-name: 'Verify Pull Request Labels'
-author: 'Jesus Vasquez'
-description: 'Verify that the PR has a valid label'
+name: 'Check Pull Request Labels'
+author: 'Nathaniel Hill'
+description: 'Verify that the PR has at least one valid label'
 branding:
   icon: 'check'
   color: 'gray-dark'
