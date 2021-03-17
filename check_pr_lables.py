@@ -31,6 +31,17 @@ def get_env_var(env_var_name, echo_value=False):
     return value
 
 
+def filter_pr_reviews_to_bot(pr_review):
+    return ((pr_review.user.login == 'github-actions[bot]'
+             or 'There are changes to production translations in this pull request' in pr_review.body)
+            and pr_review.state == 'CHANGES_REQUESTED')
+
+
+def get_bots_pr_reviews(pr):
+    pr_reviews = pr.get_reviews()
+    return list(map(filter_pr_reviews_to_bot, pr_reviews))
+
+
 # Check if the number of input arguments is correct
 if len(sys.argv) != 3:
     raise ValueError('Invalid number of arguments!')
@@ -79,23 +90,22 @@ for label in pr_labels:
 # Instead, we will create a pull request review, marked with 'REQUEST_CHANGES' when no valid label was found.
 # This will prevent merging the pull request until a valid label is added, which will trigger this check again
 # and will create a new pull request review, but in this case marked as 'APPROVE'
+bots_prs = get_bots_pr_reviews(pr)
 
 if len(pr_valid_labels):
     # If there were valid labels, dismiss the request for changes if present
-    pr_reviews = pr.get_reviews()
-    for pr_review in pr_reviews:
-        if (pr_review.user.login == 'github-actions[bot]'
-                or 'There are changes to production translations in this pull request' in pr_review.body) and pr_review.state == 'CHANGES_REQUESTED':
-            print('Dismissing changes request')
-            pr_review.dismiss(
-                'Required label added to PR confirming intention to update production translations')
+    for pr_review in bots_prs:
+        print('Dismissing changes request')
+        pr_review.dismiss(
+            'Required label added to PR confirming intention to update production translations')
 
 
 else:
     # If there were not valid labels, then create a pull request review, requesting changes
     print(
         f'Error! This pull request does not contain any of the valid labels: {valid_labels}')
-    pr.create_review(body='There are changes to production translations in this pull request. '
-                     f'Please add the following label: `{valid_labels}` to confirm that '
-                     'you intend to make these changes.',
-                     event='REQUEST_CHANGES')
+    if not len(bots_prs):
+        pr.create_review(body='There are changes to production translations in this pull request. '
+                         f'Please add the following label: `{valid_labels}` to confirm that '
+                         'you intend to make these changes.',
+                         event='REQUEST_CHANGES')
