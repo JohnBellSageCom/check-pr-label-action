@@ -5,6 +5,7 @@ import sys
 import re
 from github import Github
 
+
 def get_env_var(env_var_name, echo_value=False):
     """Try to get the value from a environmental variable.
 
@@ -18,40 +19,43 @@ def get_env_var(env_var_name, echo_value=False):
     Returns:
         string: the value from the environmental variable.
     """
-    value=os.environ.get(env_var_name)
+    value = os.environ.get(env_var_name)
 
     if value == None:
-        raise ValueError(f'The environmental variable {env_var_name} is empty!')
+        raise ValueError(
+            f'The environmental variable {env_var_name} is empty!')
 
     if echo_value:
         print(f"{env_var_name} = {value}")
 
     return value
 
+
 # Check if the number of input arguments is correct
 if len(sys.argv) != 3:
     raise ValueError('Invalid number of arguments!')
 
 # Get the GitHub token
-token=sys.argv[1]
+token = sys.argv[1]
 
 # Get the list of valid labels
-valid_labels=sys.argv[2]
+valid_labels = sys.argv[2]
 print(f'Valid labels are: {valid_labels}')
 
 # Get needed values from the environmental variables
-repo_name=get_env_var('GITHUB_REPOSITORY')
-github_ref=get_env_var('GITHUB_REF')
+repo_name = get_env_var('GITHUB_REPOSITORY')
+github_ref = get_env_var('GITHUB_REF')
 
 # Create a repository object, using the GitHub token
 repo = Github(token).get_repo(repo_name)
 
 # Try to extract the pull request number from the GitHub reference.
 try:
-    pr_number=int(re.search('refs/pull/([0-9]+)/merge', github_ref).group(1))
+    pr_number = int(re.search('refs/pull/([0-9]+)/merge', github_ref).group(1))
     print(f'Pull request number: {pr_number}')
 except AttributeError:
-    raise ValueError(f'The Pull request number could not be extracted from the GITHUB_REF = {github_ref}')
+    raise ValueError(
+        f'The Pull request number could not be extracted from the GITHUB_REF = {github_ref}')
 
 # Create a pull request object
 pr = repo.get_pull(pr_number)
@@ -80,14 +84,19 @@ if len(pr_valid_labels):
     # If there were valid labels, dismiss the request for changes if present
     pr_reviews = pr.get_reviews()
     for pr_review in pr_reviews:
-        if pr_review.user == 'github-actions[bot]':
+        print(pr_review.user)
+        print(pr_review.body)
+        if (pr_review.user == 'github-actions[bot]'
+            or 'There are changes to production translations in the pull request' in pr_review.body
+                or 'This pull request does not contain a valid label' in pr_review.body):
             pr_review.dismiss('Required label added to PR.')
-    
-    
+
+
 else:
     # If there were not valid labels, then create a pull request review, requesting changes
-    print(f'Error! This pull request does not contain any of the valid labels: {valid_labels}')
-    pr.create_review(body = 'There are changes to production translations in the pull request '
-                            f'Please add the following label: `{valid_labels}` to confirm that '
-                            'you intend to make these changes.',
-                     event = 'REQUEST_CHANGES')
+    print(
+        f'Error! This pull request does not contain any of the valid labels: {valid_labels}')
+    pr.create_review(body='There are changes to production translations in the pull request. '
+                     f'Please add the following label: `{valid_labels}` to confirm that '
+                     'you intend to make these changes.',
+                     event='REQUEST_CHANGES')
