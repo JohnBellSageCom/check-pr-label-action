@@ -84,19 +84,17 @@ if len(pr_valid_labels):
     # If there were valid labels, dismiss the request for changes if present
     pr_reviews = pr.get_reviews()
     for pr_review in pr_reviews:
-        print(pr_review.user)
-        print(pr_review.body)
-        if (pr_review.user == 'github-actions[bot]'
-            or 'There are changes to production translations in the pull request' in pr_review.body
-                or 'This pull request does not contain a valid label' in pr_review.body):
-            pr_review.dismiss('Required label added to PR.')
+        if (pr_review.user.login == 'github-actions[bot]'
+            or 'There are changes to production translations in this pull request' in pr_review.body):
+            print('Dismissing changes request')
+            pr_review.dismiss('Required label added to PR, confirming intention to update production translations')
 
 
 else:
     # If there were not valid labels, then create a pull request review, requesting changes
     print(
         f'Error! This pull request does not contain any of the valid labels: {valid_labels}')
-    pr.create_review(body='There are changes to production translations in the pull request. '
+    pr.create_review(body='There are changes to production translations in this pull request. '
                      f'Please add the following label: `{valid_labels}` to confirm that '
                      'you intend to make these changes.',
                      event='REQUEST_CHANGES')
