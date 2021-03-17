@@ -77,14 +77,17 @@ for label in pr_labels:
 # and will create a new pull request review, but in this case marked as 'APPROVE'
 
 if len(pr_valid_labels):
-    # If there were valid labels, then create a pull request request review, approving it
-    print(f'Success! This pull request contains the following valid labels: {pr_valid_labels}')
-    # pr.create_review(body = 'This pull request contains a valid label.',
-                     # event = 'APPROVE')
-    pr.create_review(event = 'APPROVE')
+    # If there were valid labels, dismiss the request for changes if present
+    pr_reviews = pr.get_reviews()
+    for pr_review in pr_reviews:
+        if pr_review.user == 'github-actions[bot]' and pr_review.state == 'REQUEST_CHANGES':
+            pr_review.dismiss('Required label added to PR.')
+    
+    
 else:
     # If there were not valid labels, then create a pull request review, requesting changes
     print(f'Error! This pull request does not contain any of the valid labels: {valid_labels}')
-    pr.create_review(body = 'This pull request does not contain a valid label. '
-                            f'Please add one of the following labels: `{valid_labels}`',
+    pr.create_review(body = 'There are changes to production translations in the pull request '
+                            f'Please add the following label: `{valid_labels}` to confirm that '
+                            'you intend to make these changes.',
                      event = 'REQUEST_CHANGES')
