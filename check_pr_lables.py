@@ -80,7 +80,7 @@ if len(pr_valid_labels):
     # If there were valid labels, dismiss the request for changes if present
     pr_reviews = pr.get_reviews()
     for pr_review in pr_reviews:
-        if pr_review.user == 'github-actions[bot]' and pr_review.state == 'REQUEST_CHANGES':
+        if pr_review.user == 'github-actions[bot]':
             pr_review.dismiss('Required label added to PR.')
     
     
