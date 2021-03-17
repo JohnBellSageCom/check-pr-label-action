@@ -85,9 +85,9 @@ if len(pr_valid_labels):
     pr_reviews = pr.get_reviews()
     for pr_review in pr_reviews:
         if (pr_review.user.login == 'github-actions[bot]'
-            or 'There are changes to production translations in this pull request' in pr_review.body):
+            or 'There are changes to production translations in this pull request' in pr_review.body) and pr_review.status == 'REQUEST_CHANGES':
             print('Dismissing changes request')
-            pr_review.dismiss('Required label added to PR, confirming intention to update production translations')
+            pr_review.dismiss('Required label added to PR confirming intention to update production translations')
 
 
 else:
